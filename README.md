@@ -12,7 +12,7 @@ If the name is someone that has emojis, it'll display those emojis.
 # Local Development
 You need to install [NodeJS](https://nodejs.org/en/download/) before running this application. After that: 
 ```
-$ git clone https://github.com/blablaboar/stock-bot.git
+$ git clone https://github.com/linglon97/ctci-bot.git
 $ npm install
 $ npm start/node index.js
 ```
