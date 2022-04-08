@@ -25,17 +25,17 @@ function initClient() {
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
 
-        message.reply(`${command}`);
         console.log(command, args);
-        switch(command) {
-            case "p": 
-            case "person": {
-                const name = args[0];
-                await handlePersonMessage(name, message, client);
-            }
-            default:
-                break;
-        }
+        return;
+        // switch(command) {
+        //     case "p": 
+        //     case "person": {
+        //         const name = args[0];
+        //         await handlePersonMessage(name, message, client);
+        //     }
+        //     default:
+        //         break;
+        // }
     });
 }
 

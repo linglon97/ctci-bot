@@ -1,4 +1,5 @@
 import {AudioPlayerStatus, joinVoiceChannel, createAudioPlayer, createAudioResource} from '@discordjs/voice';
+import {join} from "path";
 
 let audioPlayer;
 
@@ -37,21 +38,26 @@ export const getEmojiStringByName = (emojiName, client) => {
 export const joinChannelAndPlayMusic = (message) => {
     const voiceChannel = message.member.voice.channel;
     const permissions = voiceChannel.permissionsFor(message.client.user);
+    if (!permissions.has('CONNECT')){
+        return message.channel.send('You do not have the correct permission to perform this action');
+    } 
+    if (!permissions.has('SPEAK')) {
+        return message.channel.send('You do not have the correct permissions to perform this action');
+    } 
     const connection = joinVoiceChannel({
         channelId: message.member.voice.channel.id,
         guildId: message.guild.id,
         adapterCreator: message.guild.voiceAdapterCreator,
     });
     audioPlayer = createAudioPlayer();
-    const resource = createAudioResource(`../assets/chugjug.mp3`, {inlineVolume: true});
-    resource.volume.setVolume(0.2);
+    const resource = createAudioResource(join('./assets/', 'chugjug.mp3'), {inlineVolume: true});
+    resource.volume.setVolume(0.5);
 
     connection.subscribe(audioPlayer);
-    console.log("playing audio")
     audioPlayer.play(resource);
 
-    // audioPlayer.on(AudioPlayerStatus.Idle, () => {
-    //     connection.destroy();
-    // });
+    audioPlayer.on(AudioPlayerStatus.Idle, () => {
+        connection.destroy();
+    });
 }
 
