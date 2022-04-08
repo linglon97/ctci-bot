@@ -3,6 +3,9 @@ This project is a little pet project of mine to have some fun in the discord i'm
 
 # Current Functionality
 ## Commands
+`play {song}` 
+Will play your song from youtube
+
 `chugjug`
 The bot will join your server and play chug jug for you.
 
@@ -13,8 +16,8 @@ If the name is someone that has emojis, it'll display those emojis.
 You need to install [NodeJS](https://nodejs.org/en/download/) before running this application. After that: 
 ```
 $ git clone https://github.com/linglon97/ctci-bot.git
-$ npm install
-$ npm start/node index.js
+$ yarn install
+$ npm run start
 ```
 # Tests
 I might want to write tests in the future...

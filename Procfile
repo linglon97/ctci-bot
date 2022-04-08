@@ -1,1 +1,1 @@
-worker: ts-node src/main.ts
+worker: npm run start

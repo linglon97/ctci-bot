@@ -5,11 +5,17 @@
   "main": "src/main.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node src/main.ts"
+    "start": "node dist/main.js",
+    "postinstall": "tsc",
+    "watch-node": "nodemon dist/main.js",
+    "watch-ts": "tsc -w"
   },
   "repository": {
     "type": "git",
     "url": "github.com/linglon97/ctci-bot"
+  },
+  "engines": {
+    "node": "17.9.0"
   },
   "author": "linglong-at",
   "license": "ISC",
