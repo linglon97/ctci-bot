@@ -22,7 +22,8 @@ async function handlePersonMessage(name, message, client) {
             const emojiString = (0, discord_utils_1.getEmojiStringByName)(emojiName, client);
             return emojiString ? emojiString : "842629230307442698";
         });
-        message.reply(emojiStrings.join(" "));
+        let output = emojiStrings.join(" ");
+        message.reply(output);
     }
 }
 exports.handlePersonMessage = handlePersonMessage;

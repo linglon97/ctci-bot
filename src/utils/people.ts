@@ -25,8 +25,8 @@ export async function handlePersonMessage(name: string, message: Message, client
             // Send chitoge in case it doesn't work
             return emojiString ? emojiString : "842629230307442698";
         })
-
-        message.reply(emojiStrings.join(" "));
+        let output = emojiStrings.join(" ");
+        message.reply(output);
     }
 }
 
