@@ -6,6 +6,7 @@ const discord_js_1 = require("discord.js");
 const music_1 = require("./utils/music");
 const discord_utils_1 = require("./utils/discord_utils");
 const people_1 = require("./utils/people");
+const help_message_1 = require("./utils/help_message");
 dotenv.config({ path: __dirname + '/.env' });
 const DISCORD_API_KEY = process.env.DISCORD_API_KEY;
 function initClient() {
@@ -32,7 +33,7 @@ function initClient() {
         }
         const helpEmbed = new discord_js_1.MessageEmbed()
             .setTitle('UwU OwO Music Bot')
-            .setDescription('`uwu play {song name}`: the bot will join your channel and play the song specified\n`uwu q {song name}`: adds a song to the queue\n `uwu stop`: stops playing music\n`uwu chugjug`: try me out!\n`uwu skip`: skips the current song and plays the next one in the queue\n `uwu play`: plays the first song in queue\n`uwu pause`: pauses the current song if one is playing\n`uwu q`: displays the current song q\n`uwu mike`: mike')
+            .setDescription(help_message_1.helpMessage)
             .setColor('#78A2CC');
         const songName = args.join(" ");
         switch (command) {
@@ -86,6 +87,47 @@ function initClient() {
                     return;
                 }
                 (0, music_1.playSongFromYouTube)(message, chugjugVideoData, true);
+                return;
+            case "loop":
+                const isLooping = (0, music_1.loopSong)();
+                if (isLooping) {
+                    message.reply('Now looping current song');
+                }
+                else {
+                    message.reply('Looping turned off');
+                }
+                return;
+            case "lyrics":
+                if (!songName) {
+                    const firstSongName = await (0, music_1.getFirstSongInQueue)();
+                    if (firstSongName) {
+                        const lyrics = await (0, music_1.getLyricsForSongName)(firstSongName);
+                        if (!lyrics || !lyrics.lyrics) {
+                            message.reply('No lyrics found for current song.');
+                            return;
+                        }
+                        const lyricsEmbed = new discord_js_1.MessageEmbed()
+                            .setTitle(`Lyrics for current song: ${firstSongName}`)
+                            .setAuthor({ name: lyrics.artist })
+                            .setDescription(lyrics.lyrics)
+                            .setColor('#78A2CC');
+                        message.channel.send({ embeds: [lyricsEmbed] });
+                        return;
+                    }
+                    message.reply('Specify a song you want the lyrics for.');
+                    return;
+                }
+                const lyrics = await (0, music_1.getLyricsForSongName)(songName);
+                if (!lyrics || !lyrics.lyrics) {
+                    message.reply('No lyrics found for that song.');
+                    return;
+                }
+                const lyricsEmbed = new discord_js_1.MessageEmbed()
+                    .setTitle(`Lyrics for ${songName}`)
+                    .setAuthor({ name: lyrics.artist })
+                    .setDescription(lyrics.lyrics)
+                    .setColor('#78A2CC');
+                message.channel.send({ embeds: [lyricsEmbed] });
                 return;
             default:
                 message.channel.send("Invalid command!");

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getYouTubeVideoData = exports.pauseSong = exports.unPauseSong = exports.getIsSongPaused = exports.showSongQueue = exports.queueSong = exports.stopPlayingMusic = exports.skipCurrentSong = exports.songQueueHasMusic = exports.playSongFromYouTube = exports.playSongFromLocalMusic = void 0;
+exports.getLyricsForSongName = exports.getYouTubeVideoData = exports.pauseSong = exports.loopSong = exports.unPauseSong = exports.getIsSongPaused = exports.showSongQueue = exports.queueSong = exports.stopPlayingMusic = exports.getFirstSongInQueue = exports.skipCurrentSong = exports.songQueueHasMusic = exports.playSongFromYouTube = exports.playSongFromLocalMusic = void 0;
 const tslib_1 = require("tslib");
 const voice_1 = require("@discordjs/voice");
 const path_1 = require("path");
@@ -10,15 +10,19 @@ const ytdl_core_discord_1 = tslib_1.__importDefault(require("ytdl-core-discord")
 const dotenv = tslib_1.__importStar(require("dotenv"));
 const axios_1 = tslib_1.__importDefault(require("axios"));
 const yts = require('yt-search');
+const lyricsFinder = require('lyrics-finder');
 dotenv.config({ path: 'src/.env' });
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const GOOGLE_API_KEY_2 = process.env.GOOGLE_API_KEY_2;
 const youtubeSearchApiEndpoint = 'https://www.googleapis.com/youtube/v3/search';
 const youtubeWatchEndpoint = 'https://www.youtube.com/watch';
+const lyricsEndpoint = 'https://api.lyrics.ovh/v1';
 let audioPlayer;
 let connection;
 let isSongPaused = false;
 let quitChannelTimeout;
+let shouldLoopSong = false;
+let justSkippedSong = false;
 const songQueue = [];
 const playSongFromLocalMusic = (message, songName) => {
     if (!connection || !audioPlayer) {
@@ -34,11 +38,14 @@ const playSongFromYouTube = async (message, ytVideoData, addToQueue) => {
     if (!connection || !audioPlayer) {
         joinVoiceChannelAndStartAudioPlayer(message);
         audioPlayer?.on(voice_1.AudioPlayerStatus.Idle, () => {
-            songQueue.shift();
+            if (!shouldLoopSong || justSkippedSong) {
+                songQueue.shift();
+                (0, exports.showSongQueue)(message);
+                justSkippedSong = false;
+            }
             if (songQueue.length) {
                 (0, exports.playSongFromYouTube)(message, songQueue[0]);
             }
-            (0, exports.showSongQueue)(message);
             quitChannelTimeout = setTimeout(() => {
                 message.channel.send("Bot was idle for 60 seconds, leaving channel.");
                 (0, exports.stopPlayingMusic)();
@@ -97,8 +104,18 @@ const songQueueHasMusic = () => {
 exports.songQueueHasMusic = songQueueHasMusic;
 const skipCurrentSong = async (message) => {
     audioPlayer?.stop();
+    justSkippedSong = true;
 };
 exports.skipCurrentSong = skipCurrentSong;
+const getFirstSongInQueue = async () => {
+    if (audioPlayer) {
+        const videoData = songQueue[0];
+        (0, utils_1.myAssert)(videoData);
+        return videoData.songName;
+    }
+    return undefined;
+};
+exports.getFirstSongInQueue = getFirstSongInQueue;
 const stopPlayingMusic = () => {
     if (connection) {
         connection.destroy();
@@ -179,6 +196,11 @@ const unPauseSong = (message) => {
     isSongPaused = false;
 };
 exports.unPauseSong = unPauseSong;
+const loopSong = () => {
+    shouldLoopSong = !shouldLoopSong;
+    return shouldLoopSong;
+};
+exports.loopSong = loopSong;
 const pauseSong = () => {
     if (audioPlayer) {
         audioPlayer.pause();
@@ -207,15 +229,28 @@ const fetchVideoData = async (songName, apiKey) => {
     const response = await axios_1.default.get(`${youtubeSearchApiEndpoint}?key=${apiKey}&order=relevance&q=${songName}&videoDefinition=any&maxResults=1&part=snippet`);
     const data = response.data;
     const firstVideo = data.items[0];
-    return { videoId: firstVideo.id.videoId, snippet: firstVideo.snippet };
+    return { videoId: firstVideo.id.videoId, snippet: firstVideo.snippet, songName };
 };
 const getYouTubeVideoDataUsingYtSearchModule = async (songName) => {
     try {
         const results = await yts(songName);
         const firstResult = results.videos[0];
-        return { videoId: firstResult.videoId, snippet: { title: firstResult.title, description: firstResult.description, thumbnails: { medium: { url: firstResult.thumbnail } } } };
+        return { videoId: firstResult.videoId, songName, snippet: { title: firstResult.title, description: firstResult.description, thumbnails: { medium: { url: firstResult.thumbnail } } } };
     }
     catch {
         return undefined;
     }
 };
+const getLyricsForSongName = async (songName) => {
+    try {
+        const results = await yts(songName);
+        const firstResult = results.videos[0];
+        const artist = firstResult.author.name;
+        let lyrics = await lyricsFinder(artist, songName) || undefined;
+        return { lyrics, artist };
+    }
+    catch {
+        return undefined;
+    }
+};
+exports.getLyricsForSongName = getLyricsForSongName;

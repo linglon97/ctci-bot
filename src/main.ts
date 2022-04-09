@@ -1,8 +1,9 @@
 import * as dotenv from "dotenv";
 import {Client, Intents, MessageEmbed} from "discord.js";
-import {songQueueHasMusic, getYouTubeVideoData, queueSong, showSongQueue, pauseSong,skipCurrentSong, unPauseSong, getIsSongPaused, playSongFromLocalMusic, playSongFromYouTube, stopPlayingMusic} from "./utils/music";
+import {getFirstSongInQueue, songQueueHasMusic, getLyricsForSongName, loopSong, getYouTubeVideoData, queueSong, showSongQueue, pauseSong,skipCurrentSong, unPauseSong, getIsSongPaused, playSongFromLocalMusic, playSongFromYouTube, stopPlayingMusic} from "./utils/music";
 import {isMessageMeantForBot, ALL_INTENTS} from "./utils/discord_utils";
-import {handlePersonMessage, validPeople, } from "./utils/people";
+import {handlePersonMessage, validPeople} from "./utils/people";
+import {helpMessage} from "./utils/help_message";
 
 dotenv.config({ path: __dirname+'/.env' });
 const DISCORD_API_KEY = process.env.DISCORD_API_KEY;
@@ -36,7 +37,7 @@ function initClient() {
         }
         const helpEmbed = new MessageEmbed()
             .setTitle('UwU OwO Music Bot')
-            .setDescription('`uwu play {song name}`: the bot will join your channel and play the song specified\n`uwu q {song name}`: adds a song to the queue\n `uwu stop`: stops playing music\n`uwu chugjug`: try me out!\n`uwu skip`: skips the current song and plays the next one in the queue\n `uwu play`: plays the first song in queue\n`uwu pause`: pauses the current song if one is playing\n`uwu q`: displays the current song q\n`uwu mike`: mike')
+            .setDescription(helpMessage)
             .setColor('#78A2CC');
         const songName = args.join(" ");
         switch(command) {
@@ -93,6 +94,46 @@ function initClient() {
                     return;
                 }
                 playSongFromYouTube(message, chugjugVideoData, true);
+                return;
+            case "loop":
+                const isLooping = loopSong();
+                if (isLooping) {
+                    message.reply('Now looping current song');
+                } else {
+                    message.reply('Looping turned off');
+                }
+                return;
+            case "lyrics":
+                if (!songName) {
+                    const firstSongName = await getFirstSongInQueue();
+                    if (firstSongName) {
+                        const lyrics = await getLyricsForSongName(firstSongName);
+                        if (!lyrics || !lyrics.lyrics) {
+                            message.reply('No lyrics found for current song.');
+                            return;
+                        }
+                        const lyricsEmbed = new MessageEmbed()
+                            .setTitle(`Lyrics for current song: ${firstSongName}`)
+                            .setAuthor({name: lyrics.artist})
+                            .setDescription(lyrics.lyrics)
+                            .setColor('#78A2CC');
+                        message.channel.send({embeds: [lyricsEmbed]});
+                        return;
+                    }
+                    message.reply('Specify a song you want the lyrics for.');
+                    return;
+                }
+                const lyrics = await getLyricsForSongName(songName);
+                if (!lyrics || !lyrics.lyrics) {
+                    message.reply('No lyrics found for that song.');
+                    return;
+                }
+                const lyricsEmbed = new MessageEmbed()
+                    .setTitle(`Lyrics for ${songName}`)
+                    .setAuthor({name: lyrics.artist})
+                    .setDescription(lyrics.lyrics)
+                    .setColor('#78A2CC');
+                message.channel.send({embeds: [lyricsEmbed]});
                 return;
             default:
                 message.channel.send("Invalid command!");
