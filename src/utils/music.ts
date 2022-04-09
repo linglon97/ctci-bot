@@ -5,9 +5,11 @@ import {myAssert} from './utils';
 import ytdlDiscord from 'ytdl-core-discord';
 import * as dotenv from "dotenv";
 import axios from 'axios';
+const yts = require( 'yt-search' )
 
 dotenv.config({ path:'src/.env' });
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const GOOGLE_API_KEY_2 = process.env.GOOGLE_API_KEY_2;
 
 const youtubeSearchApiEndpoint = 'https://www.googleapis.com/youtube/v3/search';
 const youtubeWatchEndpoint = 'https://www.youtube.com/watch';
@@ -34,17 +36,6 @@ export const playSongFromLocalMusic = (message: Message, songName: string) => {
 
 // TODO: fix behavior when play is invoked and a song is already playing.
 export const playSongFromYouTube = async (message: Message, ytVideoData: YouTubeVideoData, addToQueue?: boolean): Promise<void> => {
-    const {title, thumbnails, description} = ytVideoData.snippet;
-    if (title && thumbnails) {
-        const embed = new MessageEmbed()
-        .setURL(`${youtubeWatchEndpoint}?v=${ytVideoData.videoId}`)
-        .setTitle(`Now Playing: ${title}`)
-        .setDescription(description.length > 100 ? `${decodeURIComponent(description).slice(0, 50)}...` : decodeURIComponent(description))
-        .setThumbnail(thumbnails.medium.url)
-        .setColor('#FF0000');
-        message.channel.send({embeds: [embed]});
-    }
-
     if (!connection || !audioPlayer) {
         joinVoiceChannelAndStartAudioPlayer(message);
          // Only register handles once when audio player is started. 
@@ -68,6 +59,22 @@ export const playSongFromYouTube = async (message: Message, ytVideoData: YouTube
         });
     } 
 
+    // If audio player wasn't set, we weren't in a voice channel. 
+    if (!audioPlayer) {
+        return;
+    }
+
+    const {title, thumbnails, description} = ytVideoData.snippet;
+    if (title && thumbnails) {
+        const embed = new MessageEmbed()
+        .setURL(`${youtubeWatchEndpoint}?v=${ytVideoData.videoId}`)
+        .setTitle(`Now Playing: ${title}`)
+        .setDescription(description.length > 100 ? `${decodeURIComponent(description).slice(0, 50)}...` : decodeURIComponent(description))
+        .setThumbnail(thumbnails.medium.url)
+        .setColor('#FF0000');
+        message.channel.send({embeds: [embed]});
+    }
+
     const stream = await ytdlDiscord(ytVideoData.videoId, {filter:'audioonly', highWaterMark: 1 << 25});
     const resource = createAudioResource(stream, {inlineVolume: true});
     resource.volume!.setVolume(0.5);
@@ -81,7 +88,10 @@ export const playSongFromYouTube = async (message: Message, ytVideoData: YouTube
 
 const joinVoiceChannelAndStartAudioPlayer = (message: Message) =>  {
     myAssert(message.member);
-
+    if (!message.member.voice.channel) {
+        message.reply('Join a voice channel first!');
+        return;
+    }
     connection = joinVoiceChannel({
         channelId: message.member.voice.channel!.id,
         guildId: message.guild!.id,
@@ -195,12 +205,35 @@ export const pauseSong = (): void => {
 }
 
 export const getYouTubeVideoData = async (songName: string): Promise<YouTubeVideoData | undefined> => {
+    // Let's first use our own API keys, if that fails, then let's use yt-search.
+    // TODO: this is spaghetti af, fix this...
     try {
-        const response = await axios.get(`${youtubeSearchApiEndpoint}?key=${GOOGLE_API_KEY}&order=relevance&q=${songName}&videoDefinition=any&maxResults=1&part=snippet`);
-        const data = response.data;
-        const firstVideo = data.items[0];
-        return {videoId: firstVideo.id.videoId, snippet: firstVideo.snippet};
+        const videoData = await fetchVideoData(songName, GOOGLE_API_KEY);
+        return videoData;
+    } catch {
+        try {
+            const videoData = await fetchVideoData(songName, GOOGLE_API_KEY_2);
+            return videoData;
+        } catch {
+            const videoData = await getYouTubeVideoDataUsingYtSearchModule(songName);
+            return videoData;
+        }
+    }
+}
+
+const fetchVideoData = async (songName: string, apiKey?: string): Promise<YouTubeVideoData> => {
+    const response = await axios.get(`${youtubeSearchApiEndpoint}?key=${apiKey}&order=relevance&q=${songName}&videoDefinition=any&maxResults=1&part=snippet`);
+    const data = response.data;
+    const firstVideo = data.items[0];
+    return {videoId: firstVideo.id.videoId, snippet: firstVideo.snippet};
+}
+
+const getYouTubeVideoDataUsingYtSearchModule = async (songName: string): Promise<YouTubeVideoData | undefined> => { 
+    try {
+        const results = await yts(songName);
+        const firstResult = results.videos[0];
+        return {videoId: firstResult.videoId, snippet: {title: firstResult.title, description: firstResult.description, thumbnails: {medium: {url: firstResult.thumbnail}}}}
     } catch {
         return undefined;
     }
-}
+ }

@@ -1,7 +1,4 @@
-import {AudioPlayerStatus, joinVoiceChannel, createAudioPlayer, createAudioResource} from '@discordjs/voice';
-import {join} from "path";
 import { Message, Client } from "discord.js";
-import { myAssert } from './utils';
 
 // https://discord.com/developers/docs/topics/gateway#list-of-intents
 export const ALL_INTENTS = 

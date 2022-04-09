@@ -9,8 +9,10 @@ const utils_1 = require("./utils");
 const ytdl_core_discord_1 = tslib_1.__importDefault(require("ytdl-core-discord"));
 const dotenv = tslib_1.__importStar(require("dotenv"));
 const axios_1 = tslib_1.__importDefault(require("axios"));
+const yts = require('yt-search');
 dotenv.config({ path: 'src/.env' });
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const GOOGLE_API_KEY_2 = process.env.GOOGLE_API_KEY_2;
 const youtubeSearchApiEndpoint = 'https://www.googleapis.com/youtube/v3/search';
 const youtubeWatchEndpoint = 'https://www.youtube.com/watch';
 let audioPlayer;
@@ -29,16 +31,6 @@ const playSongFromLocalMusic = (message, songName) => {
 };
 exports.playSongFromLocalMusic = playSongFromLocalMusic;
 const playSongFromYouTube = async (message, ytVideoData, addToQueue) => {
-    const { title, thumbnails, description } = ytVideoData.snippet;
-    if (title && thumbnails) {
-        const embed = new discord_js_1.MessageEmbed()
-            .setURL(`${youtubeWatchEndpoint}?v=${ytVideoData.videoId}`)
-            .setTitle(`Now Playing: ${title}`)
-            .setDescription(description.length > 100 ? `${decodeURIComponent(description).slice(0, 50)}...` : decodeURIComponent(description))
-            .setThumbnail(thumbnails.medium.url)
-            .setColor('#FF0000');
-        message.channel.send({ embeds: [embed] });
-    }
     if (!connection || !audioPlayer) {
         joinVoiceChannelAndStartAudioPlayer(message);
         audioPlayer?.on(voice_1.AudioPlayerStatus.Idle, () => {
@@ -59,6 +51,19 @@ const playSongFromYouTube = async (message, ytVideoData, addToQueue) => {
             }, 60000);
         });
     }
+    if (!audioPlayer) {
+        return;
+    }
+    const { title, thumbnails, description } = ytVideoData.snippet;
+    if (title && thumbnails) {
+        const embed = new discord_js_1.MessageEmbed()
+            .setURL(`${youtubeWatchEndpoint}?v=${ytVideoData.videoId}`)
+            .setTitle(`Now Playing: ${title}`)
+            .setDescription(description.length > 100 ? `${decodeURIComponent(description).slice(0, 50)}...` : decodeURIComponent(description))
+            .setThumbnail(thumbnails.medium.url)
+            .setColor('#FF0000');
+        message.channel.send({ embeds: [embed] });
+    }
     const stream = await (0, ytdl_core_discord_1.default)(ytVideoData.videoId, { filter: 'audioonly', highWaterMark: 1 << 25 });
     const resource = (0, voice_1.createAudioResource)(stream, { inlineVolume: true });
     resource.volume.setVolume(0.5);
@@ -71,6 +76,10 @@ const playSongFromYouTube = async (message, ytVideoData, addToQueue) => {
 exports.playSongFromYouTube = playSongFromYouTube;
 const joinVoiceChannelAndStartAudioPlayer = (message) => {
     (0, utils_1.myAssert)(message.member);
+    if (!message.member.voice.channel) {
+        message.reply('Join a voice channel first!');
+        return;
+    }
     connection = (0, voice_1.joinVoiceChannel)({
         channelId: message.member.voice.channel.id,
         guildId: message.guild.id,
@@ -179,13 +188,34 @@ const pauseSong = () => {
 exports.pauseSong = pauseSong;
 const getYouTubeVideoData = async (songName) => {
     try {
-        const response = await axios_1.default.get(`${youtubeSearchApiEndpoint}?key=${GOOGLE_API_KEY}&order=relevance&q=${songName}&videoDefinition=any&maxResults=1&part=snippet`);
-        const data = response.data;
-        const firstVideo = data.items[0];
-        return { videoId: firstVideo.id.videoId, snippet: firstVideo.snippet };
+        const videoData = await fetchVideoData(songName, GOOGLE_API_KEY);
+        return videoData;
+    }
+    catch {
+        try {
+            const videoData = await fetchVideoData(songName, GOOGLE_API_KEY_2);
+            return videoData;
+        }
+        catch {
+            const videoData = await getYouTubeVideoDataUsingYtSearchModule(songName);
+            return videoData;
+        }
+    }
+};
+exports.getYouTubeVideoData = getYouTubeVideoData;
+const fetchVideoData = async (songName, apiKey) => {
+    const response = await axios_1.default.get(`${youtubeSearchApiEndpoint}?key=${apiKey}&order=relevance&q=${songName}&videoDefinition=any&maxResults=1&part=snippet`);
+    const data = response.data;
+    const firstVideo = data.items[0];
+    return { videoId: firstVideo.id.videoId, snippet: firstVideo.snippet };
+};
+const getYouTubeVideoDataUsingYtSearchModule = async (songName) => {
+    try {
+        const results = await yts(songName);
+        const firstResult = results.videos[0];
+        return { videoId: firstResult.videoId, snippet: { title: firstResult.title, description: firstResult.description, thumbnails: { medium: { url: firstResult.thumbnail } } } };
     }
     catch {
         return undefined;
     }
 };
-exports.getYouTubeVideoData = getYouTubeVideoData;
