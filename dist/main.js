@@ -12,6 +12,7 @@ const DISCORD_API_KEY = process.env.DISCORD_API_KEY;
 function initClient() {
     const intents = new discord_js_1.Intents(discord_utils_1.ALL_INTENTS);
     const client = new discord_js_1.Client({ intents });
+    let lastMessageChannel;
     client.login(DISCORD_API_KEY);
     client.once('ready', () => {
         client.user.setActivity('`uwu help` or `owo help`', { type: 'PLAYING' });
@@ -20,6 +21,7 @@ function initClient() {
         if (!(0, discord_utils_1.isMessageMeantForBot)(message)) {
             return;
         }
+        lastMessageChannel = message.channel;
         const commandBody = message.content.slice(4);
         const args = commandBody.split(' ');
         if (!args.length) {
@@ -135,6 +137,12 @@ function initClient() {
                 break;
         }
         return;
+    });
+    client.on('voiceStateUpdate', (oldState, newState) => {
+        if (oldState.channel?.members.size === 1) {
+            (0, music_1.stopPlayingMusic)();
+            lastMessageChannel?.send("Leaving voice channel because there is noone here :(.");
+        }
     });
 }
 initClient();

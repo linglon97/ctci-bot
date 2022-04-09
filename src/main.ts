@@ -11,6 +11,9 @@ const DISCORD_API_KEY = process.env.DISCORD_API_KEY;
 function initClient() {
     const intents = new Intents(ALL_INTENTS);
     const client = new Client({intents});
+    // Text based message channel from which last message came from. 
+    let lastMessageChannel: any;
+
     client.login(DISCORD_API_KEY);
 
     client.once('ready', () => {
@@ -21,6 +24,7 @@ function initClient() {
         if (!isMessageMeantForBot(message)){
             return;
         }
+        lastMessageChannel = message.channel;
 
         // All prefixes have length 3 at the moment. 
         const commandBody = message.content.slice(4);
@@ -85,6 +89,7 @@ function initClient() {
                     showSongQueue(message);
                     return;
                 }
+                // TODO: support clearing queue. 
                 queueSong(songName, message);
                 return;
             case "chugjug":
@@ -142,6 +147,14 @@ function initClient() {
         }
         return;
     });
+
+    client.on('voiceStateUpdate', (oldState, newState) => {
+        // otherwise, check how many people are in the channel now
+        if (oldState.channel?.members.size === 1) {
+            stopPlayingMusic();
+            lastMessageChannel?.send("Leaving voice channel because there is noone here :(.")
+        }
+      });
 }
 
 initClient();

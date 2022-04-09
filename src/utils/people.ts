@@ -28,8 +28,8 @@ export async function handlePersonMessage(name: string, message: Message, client
         })
         let output = emojiStrings.join(" ");
         message.reply(output);
-        if (name === "mike") {
-            message.channel.send({files: [join('./src/assets/', `mikeyin.PNG`)]})
+        if (name === "mike" || name === "josh") {
+            message.channel.send({files: [join('./src/assets/', `${name}.PNG`)]})
         }
     }
 }

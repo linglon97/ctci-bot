@@ -25,8 +25,8 @@ async function handlePersonMessage(name, message, client) {
         });
         let output = emojiStrings.join(" ");
         message.reply(output);
-        if (name === "mike") {
-            message.channel.send({ files: [(0, path_1.join)('./src/assets/', `mikeyin.PNG`)] });
+        if (name === "mike" || name === "josh") {
+            message.channel.send({ files: [(0, path_1.join)('./src/assets/', `${name}.PNG`)] });
         }
     }
 }
