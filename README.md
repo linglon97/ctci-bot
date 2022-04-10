@@ -17,7 +17,8 @@ You need to install
 - [NodeJS](https://nodejs.org/en/download/) 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
- before running this application.
+
+before running this application.
 
 After that (on windows): 
 ```
