@@ -226,6 +226,10 @@ export const pauseSong = (): void => {
     }
 }
 
+export const isInVoiceChannel = (): boolean => {
+    return connection !== undefined;
+}
+
 export const getYouTubeVideoData = async (songName: string): Promise<YouTubeVideoData | undefined> => {
     // Let's first use our own API keys, if that fails, then let's use yt-search.
     // TODO: this is spaghetti af, fix this...

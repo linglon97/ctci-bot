@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 import {Client, Intents, MessageEmbed} from "discord.js";
-import {getFirstSongInQueue, songQueueHasMusic, getLyricsForSongName, loopSong, getYouTubeVideoData, queueSong, showSongQueue, pauseSong,skipCurrentSong, unPauseSong, getIsSongPaused, playSongFromLocalMusic, playSongFromYouTube, stopPlayingMusic} from "./utils/music";
+import {isInVoiceChannel, getFirstSongInQueue, songQueueHasMusic, getLyricsForSongName, loopSong, getYouTubeVideoData, queueSong, showSongQueue, pauseSong,skipCurrentSong, unPauseSong, getIsSongPaused, playSongFromLocalMusic, playSongFromYouTube, stopPlayingMusic} from "./utils/music";
 import {isMessageMeantForBot, ALL_INTENTS} from "./utils/discord_utils";
 import {handlePersonMessage, validPeople} from "./utils/people";
 import {helpMessage} from "./utils/help_message";
@@ -150,7 +150,7 @@ function initClient() {
 
     client.on('voiceStateUpdate', (oldState, newState) => {
         // otherwise, check how many people are in the channel now
-        if (oldState.channel?.members.size === 1) {
+        if (oldState.channel?.members.size === 1 && isInVoiceChannel()) {
             stopPlayingMusic();
             lastMessageChannel?.send("Leaving voice channel because there is noone here :(.")
         }

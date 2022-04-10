@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLyricsForSongName = exports.getYouTubeVideoData = exports.pauseSong = exports.loopSong = exports.unPauseSong = exports.getIsSongPaused = exports.showSongQueue = exports.queueSong = exports.stopPlayingMusic = exports.getFirstSongInQueue = exports.skipCurrentSong = exports.songQueueHasMusic = exports.playSongFromYouTube = exports.playSongFromLocalMusic = void 0;
+exports.getLyricsForSongName = exports.getYouTubeVideoData = exports.isInVoiceChannel = exports.pauseSong = exports.loopSong = exports.unPauseSong = exports.getIsSongPaused = exports.showSongQueue = exports.queueSong = exports.stopPlayingMusic = exports.getFirstSongInQueue = exports.skipCurrentSong = exports.songQueueHasMusic = exports.playSongFromYouTube = exports.playSongFromLocalMusic = void 0;
 const tslib_1 = require("tslib");
 const voice_1 = require("@discordjs/voice");
 const path_1 = require("path");
@@ -208,6 +208,10 @@ const pauseSong = () => {
     }
 };
 exports.pauseSong = pauseSong;
+const isInVoiceChannel = () => {
+    return connection !== undefined;
+};
+exports.isInVoiceChannel = isInVoiceChannel;
 const getYouTubeVideoData = async (songName) => {
     try {
         const videoData = await fetchVideoData(songName, GOOGLE_API_KEY);

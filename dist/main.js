@@ -139,7 +139,7 @@ function initClient() {
         return;
     });
     client.on('voiceStateUpdate', (oldState, newState) => {
-        if (oldState.channel?.members.size === 1) {
+        if (oldState.channel?.members.size === 1 && (0, music_1.isInVoiceChannel)()) {
             (0, music_1.stopPlayingMusic)();
             lastMessageChannel?.send("Leaving voice channel because there is noone here :(.");
         }
