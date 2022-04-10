@@ -6,6 +6,7 @@ export const validPeople = [
     "mike",
     "tony",
     "josh",
+    "michael",
 ];
 
 const imageUrlsByPeople = {
@@ -28,7 +29,7 @@ export async function handlePersonMessage(name: string, message: Message, client
         })
         let output = emojiStrings.join(" ");
         message.reply(output);
-        if (name === "mike" || name === "josh") {
+        if (name === "mike" || name === "josh" || name === "michael") {
             message.channel.send({files: [join('./src/assets/', `${name}.PNG`)]})
         }
     }
