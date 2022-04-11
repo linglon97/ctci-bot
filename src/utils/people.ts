@@ -6,6 +6,7 @@ export const validPeople = [
     "mike",
     "tony",
     "josh",
+    "michael",
 ];
 
 const imageUrlsByPeople = {
@@ -21,14 +22,16 @@ const emojiNamesByPeople : {[key: string]: Array<string>} = {
 export async function handlePersonMessage(name: string, message: Message, client: Client) {
     if (validPeople.includes(name)) {
         const emojiNames = emojiNamesByPeople[name];
-        const emojiStrings = emojiNames.map(emojiName => {
+        if (emojiNames) {
+             const emojiStrings = emojiNames.map(emojiName => {
             const emojiString = getEmojiStringByName(emojiName, client);
             // Send chitoge in case it doesn't work
             return emojiString ? emojiString : "842629230307442698";
-        })
-        let output = emojiStrings.join(" ");
-        message.reply(output);
-        if (name === "mike" || name === "josh") {
+            })
+            let output = emojiStrings.join(" ");
+            message.reply(output);
+        }
+        if (name === "mike" || name === "josh" || name === "michael") {
             message.channel.send({files: [join('./src/assets/', `${name}.PNG`)]})
         }
     }

@@ -26,6 +26,7 @@ let quitChannelTimeout: ReturnType<typeof setTimeout>;
 let shouldLoopSong = false;
 let justSkippedSong = false;
 const songQueue: Array<YouTubeVideoData> = [];
+let lastPlayedSongTitle = '';
 
 export const playSongFromLocalMusic = (message: Message, songName: string) => {
     if (!connection || !audioPlayer) {
@@ -72,7 +73,8 @@ export const playSongFromYouTube = async (message: Message, ytVideoData: YouTube
     }
 
     const {title, thumbnails, description} = ytVideoData.snippet;
-    if (title && thumbnails) {
+    if (title && thumbnails && lastPlayedSongTitle !== title) {
+        lastPlayedSongTitle = title
         const embed = new MessageEmbed()
         .setURL(`${youtubeWatchEndpoint}?v=${ytVideoData.videoId}`)
         .setTitle(`Now Playing: ${title}`)
